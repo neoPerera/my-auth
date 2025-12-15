@@ -5,23 +5,23 @@ namespace APPLICATION.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IAuthenticationProvider _authProvider;
     private readonly ITokenService _tokenService;
     private readonly IPasswordHasher _passwordHasher;
 
     public AuthService(
-        IUserRepository userRepository,
+        IAuthenticationProvider authProvider,
         ITokenService tokenService,
         IPasswordHasher passwordHasher)
     {
-        _userRepository = userRepository;
+        _authProvider = authProvider;
         _tokenService = tokenService;
         _passwordHasher = passwordHasher;
     }
 
     public async Task<AuthResult> AuthenticateAsync(string username, string password)
     {
-        var user = await _userRepository.GetByUsernameAsync(username);
+        var user = await _authProvider.GetUserByUsernameAsync(username);
         
         if (user == null)
         {
@@ -81,7 +81,7 @@ public class AuthService : IAuthService
             };
         }
 
-        var user = await _userRepository.GetByIdAsync(userId);
+        var user = await _authProvider.GetUserByIdAsync(userId);
         
         if (user == null)
         {
@@ -103,7 +103,7 @@ public class AuthService : IAuthService
 
     public async Task<ChangePasswordResult> ChangePasswordAsync(string username, string currentPassword, string newPassword)
     {
-        var user = await _userRepository.GetByUsernameAsync(username);
+        var user = await _authProvider.GetUserByUsernameAsync(username);
         
         if (user == null)
         {
@@ -139,7 +139,7 @@ public class AuthService : IAuthService
         user.Password = hashedNewPassword;
 
         // Update user in database
-        await _userRepository.UpdateAsync(user);
+        await _authProvider.UpdateUserAsync(user);
 
         return new ChangePasswordResult
         {
@@ -171,8 +171,8 @@ public class AuthService : IAuthService
         }
 
         // Check if username already exists
-        var existingUser = await _userRepository.GetByUsernameAsync(username);
-        if (existingUser != null)
+        var userExists = await _authProvider.UserExistsAsync(username);
+        if (userExists)
         {
             return new SignUpResult
             {
@@ -192,7 +192,7 @@ public class AuthService : IAuthService
         };
 
         // Save user to database
-        var createdUser = await _userRepository.CreateAsync(newUser);
+        var createdUser = await _authProvider.CreateUserAsync(newUser);
 
         // Generate token for auto-login
         var token = _tokenService.GenerateToken(createdUser);

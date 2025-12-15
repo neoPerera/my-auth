@@ -1,5 +1,5 @@
 using INFRASTRUCTURE.Persistence;
-using INFRASTRUCTURE.Repositories;
+using INFRASTRUCTURE.Providers;
 using INFRASTRUCTURE.Services;
 using CORE.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -12,23 +12,46 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        // Get authentication provider from configuration
+        var authProvider = configuration["Authentication:Provider"] ?? "PostgreSQL";
 
-        if (string.IsNullOrEmpty(connectionString))
+        // Register authentication provider based on configuration
+        switch (authProvider.ToUpperInvariant())
         {
-            throw new ArgumentNullException(nameof(connectionString), "Database connection string is missing from configuration.");
+            case "POSTGRESQL":
+                var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    throw new ArgumentNullException(nameof(connectionString), "Database connection string is missing from configuration.");
+                }
+
+                // Register DbContext
+                services.AddDbContext<AppDbContext>(options =>
+                    options.UseNpgsql(connectionString));
+
+                // Register PostgreSQL authentication provider
+                services.AddScoped<IAuthenticationProvider, PostgreSqlAuthenticationProvider>();
+                break;
+
+            // Add other providers here in the future
+            // case "LDAP":
+            //     services.AddScoped<IAuthenticationProvider, LdapAuthenticationProvider>();
+            //     break;
+            // case "ACTIVEDIRECTORY":
+            //     services.AddScoped<IAuthenticationProvider, ActiveDirectoryAuthenticationProvider>();
+            //     break;
+
+            default:
+                throw new NotSupportedException($"Authentication provider '{authProvider}' is not supported. Supported providers: PostgreSQL");
         }
 
-        // Register DbContext
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString));
-
-        // Register repositories
-        services.AddScoped<IUserRepository, UserRepository>();
-
-        // Register services
+        // Register authentication services
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+
+        // Note: IUserRepository is not registered here as this service only handles authentication.
+        // UserRepository can be registered in other services that need user management functionality.
 
         return services;
     }

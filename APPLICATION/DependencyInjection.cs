@@ -11,7 +11,7 @@ public static class DependencyInjection
         // Register application services
         services.AddScoped<IAuthService, AuthService>();
         
-        // Note: Infrastructure services (IUserRepository, ITokenService, IPasswordHasher) 
+        // Note: Infrastructure services (IAuthenticationProvider, ITokenService, IPasswordHasher) 
         // should be registered in the INFRASTRUCTURE project's DependencyInjection
         
         return services;
