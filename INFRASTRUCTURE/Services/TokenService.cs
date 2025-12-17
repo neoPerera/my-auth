@@ -29,6 +29,8 @@ public class TokenService : ITokenService
         {
             new Claim("userId", user.Id.ToString()),
             new Claim("username", user.Username),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Username),
+            new Claim(ClaimTypes.Name, user.Username),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
