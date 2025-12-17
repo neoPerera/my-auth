@@ -20,17 +20,29 @@ public class TokenService : ITokenService
         _tokenHandler = new JwtSecurityTokenHandler();
     }
 
-    public string GenerateToken(User user)
+    public string GenerateToken(User user, List<string>? roles = null, List<string>? permissions = null)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim("userId", user.Id.ToString()),
             new Claim("username", user.Username),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+
+        // Add roles to claims
+        if (roles != null && roles.Any())
+        {
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+        }
+
+        // Add permissions to claims
+        if (permissions != null && permissions.Any())
+        {
+            claims.AddRange(permissions.Select(permission => new Claim("permission", permission)));
+        }
 
         var token = new JwtSecurityToken(
             claims: claims,

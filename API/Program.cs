@@ -104,7 +104,7 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 // Enable Swagger in all environments (you can restrict this if needed)
-app.UseSwagger();
+    app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", $"Auth Service API v{serviceVersion}");

@@ -34,6 +34,11 @@ public static class DependencyInjection
                 services.AddScoped<IAuthenticationProvider, PostgreSqlAuthenticationProvider>();
                 break;
 
+            case "MOCK":
+                // Register Mock authentication provider
+                services.AddSingleton<IAuthenticationProvider, MockAuthenticationProvider>();
+                break;
+
             // Add other providers here in the future
             // case "LDAP":
             //     services.AddScoped<IAuthenticationProvider, LdapAuthenticationProvider>();
@@ -43,12 +48,34 @@ public static class DependencyInjection
             //     break;
 
             default:
-                throw new NotSupportedException($"Authentication provider '{authProvider}' is not supported. Supported providers: PostgreSQL");
+                throw new NotSupportedException($"Authentication provider '{authProvider}' is not supported. Supported providers: PostgreSQL, Mock");
+        }
+
+        // Get authorization provider from configuration (separate from authentication)
+        var authzProvider = configuration["Authorization:Provider"] ?? "Mock";
+
+        // Register authorization provider based on configuration
+        switch (authzProvider.ToUpperInvariant())
+        {
+            case "MOCK":
+                // Register Mock authorization provider
+                services.AddSingleton<IAuthorizationProvider, MockAuthorizationProvider>();
+                break;
+
+            case "POSTGRESQL":
+                // Register Database authorization provider
+                // Note: Requires AppDbContext to be registered (should be registered with PostgreSQL auth provider)
+                services.AddScoped<IAuthorizationProvider, DatabaseAuthorizationProvider>();
+                break;
+
+            default:
+                throw new NotSupportedException($"Authorization provider '{authzProvider}' is not supported. Supported providers: Mock, PostgreSQL");
         }
 
         // Register authentication services
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IInputSanitizer, InputSanitizer>();
 
         // Note: IUserRepository is not registered here as this service only handles authentication.
         // UserRepository can be registered in other services that need user management functionality.

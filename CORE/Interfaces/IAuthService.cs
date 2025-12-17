@@ -10,6 +10,7 @@ public interface IAuthService
     Task<ValidationResult> ValidateTokenAsync(string token);
     Task<ChangePasswordResult> ChangePasswordAsync(string username, string currentPassword, string newPassword);
     Task<SignUpResult> SignUpAsync(string username, string password);
+    Task<AuthorizationResult> AuthorizeRequestAsync(string token, string service,string controller, string action);
 }
 
 public class AuthResult
@@ -40,5 +41,13 @@ public class SignUpResult
     public string Message { get; set; } = string.Empty;
     public string? Token { get; set; }
     public User? User { get; set; }
+}
+
+public class AuthorizationResult
+{
+    public bool IsAuthorized { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public List<string>? Roles { get; set; }
+    public IEnumerable<Claim>? Claims { get; set; }
 }
 

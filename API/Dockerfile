@@ -10,7 +10,7 @@ WORKDIR /src
 COPY ["API/API.csproj", "API/"]
 COPY ["APPLICATION/APPLICATION.csproj", "APPLICATION/"]
 COPY ["CORE/CORE.csproj", "CORE/"]
-RUN dotnet restore "API/API.csproj"
+RUN dotnet restore "API/API.csproj" 
 COPY . .
 WORKDIR "/src/API"
 RUN dotnet build "./API.csproj" -c $BUILD_CONFIGURATION -o /app/build

@@ -48,35 +48,35 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = result.Message });
         }
     }
-
-    [HttpPost("validate")]
-    public async Task<IActionResult> Validate([FromBody] ValidateRequest validateRequest)
-    {
-        var result = await _authService.ValidateTokenAsync(validateRequest.Token);
-        
-        if (result.IsValid)
-        {
-            // Convert claims to dictionary
-            var claimsDict = result.Claims?
-                .GroupBy(c => c.Type)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Count() == 1 ? g.First().Value : string.Join(", ", g.Select(c => c.Value))
-                );
-
-            var response = new ValidateResponse
-            {
-                IsValid = true,
-                Message = result.Message,
-                Claims = claimsDict
-            };
-            return Ok(response);
-        }
-        else
-        {
-            return Unauthorized(new { message = result.Message });
-        }
-    }
+    //
+    // [HttpPost("validate")]
+    // public async Task<IActionResult> Validate([FromBody] ValidateRequest validateRequest)
+    // {
+    //     var result = await _authService.ValidateTokenAsync(validateRequest.Token);
+    //     
+    //     if (result.IsValid)
+    //     {
+    //         // Convert claims to dictionary
+    //         var claimsDict = result.Claims?
+    //             .GroupBy(c => c.Type)
+    //             .ToDictionary(
+    //                 g => g.Key,
+    //                 g => g.Count() == 1 ? g.First().Value : string.Join(", ", g.Select(c => c.Value))
+    //             );
+    //
+    //         var response = new ValidateResponse
+    //         {
+    //             IsValid = true,
+    //             Message = result.Message,
+    //             Claims = claimsDict
+    //         };
+    //         return Ok(response);
+    //     }
+    //     else
+    //     {
+    //         return Unauthorized(new { message = result.Message });
+    //     }
+    // }
 
     [HttpPost("signup")]
     public async Task<IActionResult> SignUp([FromBody] SignUpRequest signUpRequest)
@@ -145,6 +145,47 @@ public class AuthController : ControllerBase
                 Success = false,
                 Message = result.Message
             });
+        }
+    }
+
+    [HttpPost("authorize")]
+    public async Task<IActionResult> Authorize([FromBody] AuthorizationRequest authorizationRequest)
+    {
+        var result = await _authService.AuthorizeRequestAsync(
+            authorizationRequest.Token,
+            authorizationRequest.Service,
+            authorizationRequest.Controller,
+            authorizationRequest.Action);
+
+        // Convert claims to dictionary for JSON serialization
+        var claimsDict = result.Claims?
+            .GroupBy(c => c.Type)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Count() == 1 ? g.First().Value : string.Join(", ", g.Select(c => c.Value))
+            );
+
+        // Extract roles from claims
+        var roles = result.Claims?
+            .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
+            .Select(c => c.Value)
+            .ToList();
+
+        var response = new AuthorizationResponse
+        {
+            IsAuthorized = result.IsAuthorized,
+            Message = result.Message,
+            Roles = roles ?? result.Roles,
+            Claims = claimsDict
+        };
+
+        if (result.IsAuthorized)
+        {
+            return Ok(response);
+        }
+        else
+        {
+            return Unauthorized(response);
         }
     }
 }
