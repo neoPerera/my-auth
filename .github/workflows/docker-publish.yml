@@ -42,5 +42,5 @@ jobs:
 
       - name: 📤 Push Auth Service Docker image
         run: |
-          docker push chanuth/my-auth.${IMAGE_TAG}
+          docker push chanuth/my-auth:auth.${IMAGE_TAG}
 
