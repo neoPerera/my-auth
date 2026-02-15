@@ -74,7 +74,12 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("https://stage-myfinance.onrender.com", "https://myfinance.chanuthperera.com", "http://localhost:3000", "http://localhost:4001")
+        policy.WithOrigins("https://stage-myfinance.onrender.com",
+                "https://myfinance.chanuthperera.com",
+                "http://localhost:3000", 
+                "http://localhost:4001",
+                "https://login.chanuthperera.com"
+                )
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials(); // Allow credentials for authenticated requests
